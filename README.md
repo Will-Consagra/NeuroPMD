@@ -7,6 +7,7 @@ The code is available on the project GitHub page: https://github.com/Will-Consag
 The conda environment (concon_ax) is defined in the environment.yml file. To create and activate the environment, use the following commands:
 
 `conda env create -f environment.yml` 
+
 `conda activate concon_ax`
 
 # Repository Structure
