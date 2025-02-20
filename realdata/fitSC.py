@@ -289,7 +289,7 @@ sig_improvement = []
 some_high_threshold = 1e6; some_low_threshold = 1e-6; 
 
 ## make the required directories for the output 
-expName = "fmodel_degree_%s_width_%s_depth_%s_w0_%s_lam_%s_batchfrac_%s_Vol_%s_Cyclic_%s"%(max_degree, width, depth, w0, lambda_2, CYCLIC)
+expName = "fmodel_degree_%s_width_%s_depth_%s_w0_%s_lam_%s_Cyclic_%s"%(max_degree, width, depth, w0, lambda_2, CYCLIC)
 
 MODEL_DIR = os.path.join(DATADIR, "models", expName)
 FIG_DIR = os.path.join(DATADIR, "figures", expName)
