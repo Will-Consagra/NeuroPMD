@@ -174,6 +174,8 @@ DATADIR = args.data_dir
 PRETRAINED = args.model_dir
 EARLYSTOP = args.es
 
+print("Device:", device_num, "Lambda 2:", lambda_2, "max_degree:", max_degree, "rank:", rank, "depth:", depth, "cyclic:", CYCLIC, "eary_stop:", EARLYSTOP)
+
 #### load data ####
 endpoint_file = os.path.join(DATADIR, "LH__points_euc.pt")
 points_tensor = torch.load(endpoint_file)
@@ -384,6 +386,6 @@ for epoch in range(1, num_epochs+1):
 		if criteria[-1] == min(criteria):
 			torch.save(func_model.state_dict(), os.path.join(MODEL_DIR, "model_checkpoint_epoch_%s.pth"%(epoch,)) )
 		## have we seen no significant improvement for over our `patience`?
-		if not any(sig_improvement[-patience:]):
+		if (not any(sig_improvement[-patience:])) and EARLYSTOP:
 			break
 
