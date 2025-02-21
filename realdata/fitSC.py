@@ -157,7 +157,7 @@ DATADIR = args.data_dir
 PRETRAINED = args.model_dir
 EARLYSTOP = args.es
 
-print("Device:", device_num, "Lambda 2:", lambda_2, "max_degree:", max_degree, "rank:", rank, "depth:", depth, "cyclic:", CYCLIC, "eary_stop:", EARLYSTOP)
+print("Device:", device_num, "Lambda 2:", lambda_2, "max_degree:", max_degree, "rank:", rank, "depth:", depth, "cyclic:", CYCLIC, "eary_stop:", EARLYSTOP, "check_point:", CHECKPOINT)
 
 #### load data ####
 endpoint_file = os.path.join(DATADIR, "LH__points_euc.pt")
@@ -275,6 +275,7 @@ some_high_threshold = 1e6; some_low_threshold = 1e-6;
 expName = "fmodel_degree_%s_width_%s_depth_%s_w0_%s_lam_%s"%(max_degree, width, depth, w0, lambda_2)
 MODEL_DIR = os.path.join(DATADIR, "models", expName)  
 makeDir(os.path.join(DATADIR, "models"))
+makeDir(MODEL_DIR)
 
 
 #######################################################
