@@ -25,7 +25,6 @@ from representation import PPLatentSphericalSiren, SphHarmTPLinModel
 from utils import cart2sphere
 from sph_harm_utils import clear_spherical_harmonics_cache
 
-import matplotlib.pyplot as plt 
 import argparse
 
 ## utility functions
@@ -127,24 +126,6 @@ def laplace(model, batch_points, epsilon=1e-3):
 		lap_f += torch.einsum('bi,bij,bj->b', P[:, i, :], hess_euc_f, P[:, i, :])
 	return lap_f 
 
-#### marginal plotting utility ####
-def marg_plot(func_model, coords_surf_ix, coords_surf, chunk_size=10000):
-	func_evals = []
-	for i in range(coords_surf_ix.shape[0]):
-		coords_six = coords_surf_ix[i,:]
-		marg_coords_six = torch.from_numpy(np.column_stack((np.tile(coords_surf_ix[i,:], (coords_surf.shape[0],1)), coords_surf))).float()
-		## batch eval to avoid overflow 
-		f_chunks = []
-		for j in range(marg_coords_six.shape[0]//chunk_size + 1):
-			f_evals_chunk = func_model(marg_coords_six[chunk_size*j:(chunk_size*(j+1)),:].to(device))["model_out"]
-			clear_spherical_harmonics_cache()
-			f_chunks.append(f_evals_chunk.cpu().detach())
-		fevals = torch.cat(f_chunks, dim=0)
-		func_evals.append(fevals) 
-	func_evals_tensor = torch.exp(torch.cat(func_evals,dim=1))
-	func_evals_mean = func_evals_tensor.mean(dim=1).numpy()
-	return func_evals_mean
-
 ## parse args
 parser = argparse.ArgumentParser()
 
@@ -155,6 +136,7 @@ parser.add_argument('--rank', type=int, required=True)
 parser.add_argument('--depth', type=int, required=True)
 parser.add_argument('--cyclic', action='store_true')
 parser.add_argument('--es', action='store_true')
+parser.add_argument('--cp', action='store_true')
 parser.add_argument('--base_lr', type=float, default=1e-5)
 parser.add_argument('--max_lr', type=float, default=1e-3)
 parser.add_argument('--step_size_up', type=int, default=2000)
@@ -169,6 +151,7 @@ lambda_2 = args.lambda_2
 max_degree = args.max_degree
 rank = args.rank
 depth = args.depth 
+CHECKPOINT = args.cp
 CYCLIC = args.cyclic
 DATADIR = args.data_dir
 PRETRAINED = args.model_dir
@@ -289,19 +272,10 @@ sig_improvement = []
 some_high_threshold = 1e6; some_low_threshold = 1e-6; 
 
 ## make the required directories for the output 
-expName = "fmodel_degree_%s_width_%s_depth_%s_w0_%s_lam_%s_Cyclic_%s"%(max_degree, width, depth, w0, lambda_2, CYCLIC)
-
-MODEL_DIR = os.path.join(DATADIR, "models", expName)
-FIG_DIR = os.path.join(DATADIR, "figures", expName)
-MARG_DIR = os.path.join(DATADIR, "marg_means", expName)
-  
+expName = "fmodel_degree_%s_width_%s_depth_%s_w0_%s_lam_%s"%(max_degree, width, depth, w0, lambda_2)
+MODEL_DIR = os.path.join(DATADIR, "models", expName)  
 makeDir(os.path.join(DATADIR, "models"))
-makeDir(os.path.join(DATADIR, "figures"))
-makeDir(os.path.join(DATADIR, "marg_means"))
 
-makeDir(MODEL_DIR)
-makeDir(FIG_DIR)
-makeDir(MARG_DIR)
 
 #######################################################
 ####################Estimate Weights###################
@@ -357,6 +331,7 @@ for epoch in range(1, num_epochs+1):
 		#pbar.update(1)
 		total_steps += 1
 	print("Epoch %d, Loss %0.6f, iteration time %0.6f" % (epoch, loss_i, time.time() - start_time))
+	######## early stopping ########
 	if (not epoch % check_freq) and (patience >= epoch):
 		######## estimate ISE criteria ########
 		## 0) compute normalization integral 
@@ -376,7 +351,6 @@ for epoch in range(1, num_epochs+1):
 		writer.add_scalar('Loss/ISE_estim', approx_l2_error_i.item(), epoch)
 		writer.add_scalar('Loss/L2_energy', fmodel_l2_norm_quadrature_i.sum().item(), epoch)
 		writer.add_scalar('Loss/L2_inner_prod', (2./Ntest)*Vol_OmegaXOmega*fmodel_valid_i.sum().item(), epoch)
-		######## early stopping ########
 		## store criteria 
 		criteria.append(approx_l2_error_i.item())
 		## do we see significant improvement
@@ -384,8 +358,12 @@ for epoch in range(1, num_epochs+1):
 			sig_improvement.append(True)
 		## save model if it is the best one
 		if criteria[-1] == min(criteria):
-			torch.save(func_model.state_dict(), os.path.join(MODEL_DIR, "model_checkpoint_epoch_%s.pth"%(epoch,)) )
+			torch.save(func_model.state_dict(), os.path.join(MODEL_DIR, "model_checkpoint_es_%s.pth"%(epoch,)) )
 		## have we seen no significant improvement for over our `patience`?
 		if (not any(sig_improvement[-patience:])) and EARLYSTOP:
 			break
+	######## regular checkpoints ########
+	if CHECKPOINT and (not epoch % 1000):
+		torch.save(func_model.state_dict(), os.path.join(MODEL_DIR, "model_checkpoint_epoch_%s.pth"%(epoch,)) )
+
 
