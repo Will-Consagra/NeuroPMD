@@ -69,8 +69,6 @@ parser.add_argument('--depth', type=int, required=True)
 parser.add_argument('--viz_dir', type=str, required=True, help="Path to the directory to visualization data")
 parser.add_argument('--model_dir', type=str, default="", help="Path to pre-trained .pt model")
 
-MARG_DIR
-
 args = parser.parse_args()
 
 # Access the arguments
