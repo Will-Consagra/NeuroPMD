@@ -123,8 +123,7 @@ func_model = PPLatentSphericalSiren(max_degree=max_degree,
 									out_channels = out_channels, 
 									w0=w0, 
 									outermost_linear=True)
-func_model.load_state_dict(torch.load(MODELPT),
-							map_location=device)
+func_model.load_state_dict(torch.load(MODELPT, map_location=device))
 
 
 ## get surfaces for plotting 
