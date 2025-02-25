@@ -80,7 +80,7 @@ VIZDIR = args.viz_dir
 MODELPT = args.model_dir
 
 if not MODELPT:
-	MODELPT = os.path.join(current_dir, model, "fmodel_degree_%s_width_%s_depth_%s_w0_10_lam_0.001.pth" % (max_degree, rank, depth)) 
+	MODELPT = os.path.join(current_dir, "model", "fmodel_degree_%s_width_%s_depth_%s_w0_10_lam_0.001.pth" % (max_degree, rank, depth)) 
 
 device = torch.device("cuda:%s"%device_num if torch.cuda.is_available() else "cpu")
 
