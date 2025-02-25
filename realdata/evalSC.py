@@ -116,6 +116,7 @@ quadweights_S2xS2 = quadweights_S2xS2.to(device)
 width = rank ## width 
 w0 = 10
 out_channels = 1 ##univariate functional data 
+torch.manual_seed(10)
 func_model = PPLatentSphericalSiren(max_degree=max_degree, 
 									rank=rank, 
 									width = width, 
