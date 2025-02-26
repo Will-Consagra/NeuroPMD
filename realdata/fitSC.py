@@ -26,6 +26,7 @@ from utils import cart2sphere
 from sph_harm_utils import clear_spherical_harmonics_cache
 
 import argparse
+import matplotlib.pyplot as plt 
 
 ## utility functions
 def makeDir(dirpath):
@@ -126,6 +127,42 @@ def laplace(model, batch_points, epsilon=1e-3):
 		lap_f += torch.einsum('bi,bij,bj->b', P[:, i, :], hess_euc_f, P[:, i, :])
 	return lap_f 
 
+#### plotting utility ####
+def marg_plot(func_model, coords_surf_ix, coords_surf, chunk_size=10000):
+	func_evals = []
+	for i in range(coords_surf_ix.shape[0]):
+		coords_six = coords_surf_ix[i,:]
+		marg_coords_six = torch.from_numpy(np.column_stack((np.tile(coords_surf_ix[i,:], (coords_surf.shape[0],1)), coords_surf))).float()
+		## batch eval to avoid overflow 
+		f_chunks = []
+		for j in range(marg_coords_six.shape[0]//chunk_size + 1):
+			f_evals_chunk = func_model(marg_coords_six[chunk_size*j:(chunk_size*(j+1)),:].to(device))["model_out"]
+			clear_spherical_harmonics_cache()
+			f_chunks.append(f_evals_chunk.cpu().detach())
+		fevals = torch.cat(f_chunks, dim=0)
+		func_evals.append(fevals) 
+	func_evals_tensor = torch.exp(torch.cat(func_evals,dim=1))
+	func_evals_mean = func_evals_tensor.mean(dim=1).numpy()
+	return func_evals_mean
+
+def batch_eval_density(func_model, chunk_size = 10000):
+	## compute normalization integral 
+	log_norm_integral = torch.log((torch.exp(func_model(quadpoints_S2xS2)["model_out"])*quadweights_S2xS2.view(-1,1)).sum())
+	clear_spherical_harmonics_cache()
+	Omege_chunks = []
+	for i in range(Omega_X.shape[0]//chunk_size + 1):
+		Omega_X_chunk = Omega_X[chunk_size*i:(chunk_size*(i+1)),:].float().to(device)
+		intensity_evals_X_chunk = torch.exp(func_model(Omega_X_chunk)["model_out"] - log_norm_integral)
+		clear_spherical_harmonics_cache()
+		Omege_chunks.append(intensity_evals_X_chunk.cpu().detach())
+	density_evals_X = torch.cat(Omege_chunks, dim=0)
+	## re-stack to grid for plotting 
+	density_matrix = np.zeros((nverts, nverts)) 
+	for idx in idx_map.keys():
+		i, j = idx_map[idx]
+		density_matrix[i,j] = density_evals_X[idx].cpu().detach().numpy().ravel()
+	return density_matrix
+
 ## parse args
 parser = argparse.ArgumentParser()
 
@@ -140,7 +177,8 @@ parser.add_argument('--cp', action='store_true')
 parser.add_argument('--base_lr', type=float, default=1e-5)
 parser.add_argument('--max_lr', type=float, default=1e-3)
 parser.add_argument('--step_size_up', type=int, default=2000)
-parser.add_argument('--data_dir', type=str, default="endpoints/10", help="Path to the data directory (/path/2/new_subjects/subject_name/)")
+parser.add_argument('--data_dir', type=str, default="endpoints/10", help="Path to the data directory")
+parser.add_argument('--viz', action='store_true', help="Plots for fit evaluation at each checkpoint?")
 parser.add_argument('--model_dir', type=str, default="", help="Path to pre-trained .pt model")
 
 args = parser.parse_args()
@@ -155,6 +193,7 @@ CHECKPOINT = args.cp
 CYCLIC = args.cyclic
 DATADIR = args.data_dir
 PRETRAINED = args.model_dir
+VIZ = args.viz
 EARLYSTOP = args.es
 
 print("Device:", device_num, "Lambda 2:", lambda_2, "max_degree:", max_degree, "rank:", rank, "depth:", depth, "cyclic:", CYCLIC, "eary_stop:", EARLYSTOP, "check_point:", CHECKPOINT)
@@ -277,6 +316,28 @@ MODEL_DIR = os.path.join(DATADIR, "models", expName)
 makeDir(os.path.join(DATADIR, "models"))
 makeDir(MODEL_DIR)
 
+if VIZ:
+	VIZ_DIR = os.path.join(DATADIR, "figures", expName)  
+	makeDir(os.path.join(DATADIR, "figures"))
+	makeDir(VIZ_DIR)
+	## get surfaces for plotting 
+	coords_lh_surf_lps = torch.load(os.path.join(current_dir, "surfaces", "lp_sph_surface_lps_verts.pt"))
+	coords_surf_frontalpole = torch.load(os.path.join(current_dir, "surfaces", "LH_frontalpole_verts.pt"))
+	coords_surf_medialorbitofrontal = torch.load(os.path.join(current_dir, "surfaces", "LH_medialorbitofrontal_verts.pt"))
+	coords_surf_temporalpole = torch.load(os.path.join(current_dir, "surfaces", "LH_temporalpole_verts.pt"))
+	## set up grid for evaluation (from SBCI)
+	X = np.load(os.path.join(PATH2NPMD, "data", "X0_grid.npy"))
+	nverts = X.shape[0]
+	Omega_X = np.zeros((nverts**2, 6))
+	idx = 0
+	idx_map = {}
+	for i in range(nverts): ## flatten product grid X x X 
+		for j in range(nverts):
+			Omega_X[idx,0:3] = X[i,:]
+			Omega_X[idx,3:] = X[j,:]
+			idx_map[idx] = (i,j)
+			idx += 1
+	Omega_X = torch.from_numpy(Omega_X).float()
 
 #######################################################
 ####################Estimate Weights###################
@@ -365,6 +426,16 @@ for epoch in range(1, num_epochs+1):
 			break
 	######## regular checkpoints ########
 	if CHECKPOINT and (not epoch % 1000):
+		## save model
 		torch.save(func_model.state_dict(), os.path.join(MODEL_DIR, "model_checkpoint_epoch_%s.pth"%(epoch,)) )
-
-
+		if VIZ: ## plot intermediate fits 
+			## marginal means
+			func_evals_marg_mean_frontalpole = marg_plot(func_model, coords_surf_frontalpole, coords_lh_surf_lps, chunk_size=10000)
+			func_evals_marg_mean_medialorbitofrontal = marg_plot(func_model, coords_surf_medialorbitofrontal, coords_lh_surf_lps, chunk_size=10000)
+			func_evals_marg_mean_temporalpole = marg_plot(func_model, coords_surf_temporalpole, coords_lh_surf_lps, chunk_size=10000)
+			with open(os.path.join(VIZ_DIR, "f_evals_marg_mean.pkl"), "wb") as pklfile:
+				pickle.dump((func_evals_marg_mean_frontalpole, func_evals_marg_mean_medialorbitofrontal, func_evals_marg_mean_temporalpole), pklfile)
+			## plot LH-LH connectivity on ico4
+			C_SC_LH = batch_eval_density(func_model, chunk_size = 10000)
+			with open(os.path.join(VIZ_DIR, "CC_lh_ico4.npy"), "wb") as npfile:
+				np.save(npfile, C_SC_LH)
