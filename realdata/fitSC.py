@@ -418,6 +418,8 @@ for epoch in range(1, num_epochs+1):
 		## do we see significant improvement
 		if (criteria[-1]/criteria[-2] <= 1-min_delta):
 			sig_improvement.append(True)
+		else:
+			sig_improvement.append(False)
 		## save model if it is the best one
 		if criteria[-1] == min(criteria):
 			torch.save(func_model.state_dict(), os.path.join(MODEL_DIR, "model_checkpoint_es_%s.pth"%(epoch,)) )
@@ -433,9 +435,9 @@ for epoch in range(1, num_epochs+1):
 			func_evals_marg_mean_frontalpole = marg_plot(func_model, coords_surf_frontalpole, coords_lh_surf_lps, chunk_size=10000)
 			func_evals_marg_mean_medialorbitofrontal = marg_plot(func_model, coords_surf_medialorbitofrontal, coords_lh_surf_lps, chunk_size=10000)
 			func_evals_marg_mean_temporalpole = marg_plot(func_model, coords_surf_temporalpole, coords_lh_surf_lps, chunk_size=10000)
-			with open(os.path.join(VIZ_DIR, "f_evals_marg_mean.pkl"), "wb") as pklfile:
+			with open(os.path.join(VIZ_DIR, "f_evals_marg_mean%s.pkl"%epoch), "wb") as pklfile:
 				pickle.dump((func_evals_marg_mean_frontalpole, func_evals_marg_mean_medialorbitofrontal, func_evals_marg_mean_temporalpole), pklfile)
 			## plot LH-LH connectivity on ico4
 			C_SC_LH = batch_eval_density(func_model, chunk_size = 10000)
-			with open(os.path.join(VIZ_DIR, "CC_lh_ico4.npy"), "wb") as npfile:
+			with open(os.path.join(VIZ_DIR, "CC_lh_ico4%s.npy"%epoch), "wb") as npfile:
 				np.save(npfile, C_SC_LH)

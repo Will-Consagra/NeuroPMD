@@ -141,7 +141,8 @@ class RTPSphericalHarmonicsPyT(nn.Module):
 				ix = self._get_flax_index(l, m_l)
 				self.ixmap[ix] = (l, m_l)
 		ix_pairs = [(i1, i2) for i1 in self.ixmap.keys() for i2 in self.ixmap.keys()]
-		self.rand_ix = random.sample(ix_pairs, self.rank)
+		rand_ix = torch.tensor(random.sample(ix_pairs, self.rank), dtype=torch.long)
+		self.register_buffer("rand_ix", rand_ix)
 	def _get_flax_index(self, l, m_l):
 		return l*(l + 1) + m_l
 	def _spharm(self, inc, azim):
@@ -164,7 +165,7 @@ class RTPSphericalHarmonicsPyT(nn.Module):
 		Psi_1 = self._spharm(inclination_1, azimuthal_1)
 		Psi_2 = self._spharm(inclination_2, azimuthal_2)
 		Psi_prod = torch.zeros(*coordinates.shape[:-1], self.rank, device=device)
-		for k, (i, j) in enumerate(self.rand_ix):
+		for k, (i, j) in enumerate(self.rand_ix.tolist()):
 			Psi_prod[..., k] = Psi_1[..., i] * Psi_2[..., j]
 		return Psi_prod
 
