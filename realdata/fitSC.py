@@ -394,7 +394,7 @@ for epoch in range(1, num_epochs+1):
 		total_steps += 1
 	print("Epoch %d, Loss %0.6f, iteration time %0.6f" % (epoch, loss_i, time.time() - start_time))
 	######## early stopping ########
-	if (not epoch % check_freq) and (patience >= epoch):
+	if (not epoch % check_freq) and (patience <= epoch):
 		######## estimate ISE criteria ########
 		## 0) compute normalization integral 
 		log_fhat = func_model(quadpoints_S2xS2)["model_out"]
