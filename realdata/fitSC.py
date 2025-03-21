@@ -177,6 +177,9 @@ parser.add_argument('--cp', action='store_true')
 parser.add_argument('--base_lr', type=float, default=1e-5)
 parser.add_argument('--max_lr', type=float, default=1e-3)
 parser.add_argument('--step_size_up', type=int, default=2000)
+parser.add_argument('--batch_frac', type=int, default=2)
+parser.add_argument('--Q1', type=int, default=100000) ## set MC quadrature sizes 
+parser.add_argument('--Q2', type=int, default=10000)
 parser.add_argument('--data_dir', type=str, default="endpoints/10", help="Path to the data directory")
 parser.add_argument('--viz', action='store_true', help="Plots for fit evaluation at each checkpoint?")
 parser.add_argument('--model_dir', type=str, default="", help="Path to pre-trained .pt model")
@@ -189,6 +192,9 @@ lambda_2 = args.lambda_2
 max_degree = args.max_degree
 rank = args.rank
 depth = args.depth 
+batch_frac = args.batch_frac
+Q1 = args.Q1
+Q2 = args.Q2
 CHECKPOINT = args.cp
 CYCLIC = args.cyclic
 DATADIR = args.data_dir
@@ -244,7 +250,6 @@ epsilon = 1e-3
 Vol_OmegaXOmega = (4*torch.pi)**2
 
 ## create data object 
-batch_frac = 2
 ## get small validation set 
 n = points_tensor.size(0) 
 train_prop = 0.95
@@ -255,7 +260,7 @@ points_tensor_train = points_tensor[indices[:n_train],:]
 points_tensor_test = points_tensor[indices[n_train:],:]
 Ntest = points_tensor_test.shape[0]
 O_train = PointPattern(points_tensor_train)
-dataloader_train = DataLoader(O_train, shuffle=True, batch_size=batch_size, pin_memory=True, num_workers=0)
+dataloader_train = DataLoader(O_train, shuffle=True, batch_size=batch_size, pin_memory=True, num_workers=0, drop_last=True)
 
 #######################################################
 ####################Configure network##################
@@ -263,9 +268,6 @@ dataloader_train = DataLoader(O_train, shuffle=True, batch_size=batch_size, pin_
 
 #### Configure network ####
 
-## set MC quadrature sizes 
-Q1 = 10**5
-Q2 = 10**4
 width = rank ## width 
 w0 = 10
 out_channels = 1 ##univariate functional data 
