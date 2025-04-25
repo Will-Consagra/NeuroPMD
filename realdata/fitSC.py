@@ -183,7 +183,7 @@ parser.add_argument('--Q2', type=int, default=10000)
 parser.add_argument('--data_dir', type=str, default="endpoints/10", help="Path to the data directory")
 parser.add_argument('--viz', action='store_true', help="Plots for fit evaluation at each checkpoint?")
 parser.add_argument('--model_dir', type=str, default="", help="Path to pre-trained .pt model")
-
+parser.add_argument("--reg",type=str,choices=["QTV", "LB"], default="LB", help="Choose QTV (quadratic total variation) or LB (laplace-beltrami) roughness penalty.")
 args = parser.parse_args()
 
 # Access the arguments
@@ -201,6 +201,7 @@ DATADIR = args.data_dir
 PRETRAINED = args.model_dir
 VIZ = args.viz
 EARLYSTOP = args.es
+PENTYPE = args.reg
 
 print("Device:", device_num, "Lambda 2:", lambda_2, "max_degree:", max_degree, "rank:", rank, "depth:", depth, "cyclic:", CYCLIC, "eary_stop:", EARLYSTOP, "check_point:", CHECKPOINT)
 
@@ -362,11 +363,12 @@ for epoch in range(1, num_epochs+1):
 		clear_spherical_harmonics_cache()
 		## step 3: form MC - roughness penalty 
 		batch_points_q2 = UnifS2xS2(Q2).to(device)
-		#func_model_grad = gradient(func_model, batch_points_q2, epsilon=epsilon)
-		#TV_prior = (Vol_OmegaXOmega/Q2)*((torch.abs(func_model_grad)).sum())
-		#clear_spherical_harmonics_cache()
-		func_model_lapl = laplace(func_model, batch_points_q2, epsilon=epsilon)
-		Rough_prior = (Vol_OmegaXOmega/Q2)*((func_model_lapl**2).sum())
+		if PENTYPE=="QTV":
+			func_model_grad = gradient(func_model, batch_points_q2, epsilon=epsilon)
+			Rough_prior = (Vol_OmegaXOmega/Q2)*(torch.sum(func_model_grad**2,dim=-1).sum())
+		elif PENTYPE=="LB":
+			func_model_lapl = laplace(func_model, batch_points_q2, epsilon=epsilon)
+			Rough_prior = (Vol_OmegaXOmega/Q2)*((func_model_lapl**2).sum())
 		clear_spherical_harmonics_cache()
 		## step 4: perform gradient step 
 		pp_likelihood_i = data_term_i - norm_term_i 
@@ -380,7 +382,6 @@ for epoch in range(1, num_epochs+1):
 		writer.add_scalar('Loss/total_loss', loss_i.item(), epoch * len(dataloader_train) + step_i)
 		writer.add_scalar('Metrics/data_term', -data_term_i.item(), epoch * len(dataloader_train) + step_i)
 		writer.add_scalar('Metrics/norm_integral', norm_term_i.item(), epoch * len(dataloader_train) + step_i)
-		#writer.add_scalar('Metrics/TV_prior', TV_prior.item(), epoch * len(dataloader_train) + step_i)
 		writer.add_scalar('Metrics/Rough_prior', Rough_prior.item(), epoch * len(dataloader_train) + step_i)
 		for name, param in func_model.named_parameters():
 			if param.requires_grad:
