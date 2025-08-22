@@ -24,7 +24,7 @@ To run the simulation for the torus case in Section 5.1 of the paper, run
 
 `python simulations/MC_sim_study_T2.py mc_exp --data_dir simulations/T2_data --out_dir simulations/T2_data/T2_results`
 
-Replace mc_exp with values ranging from 1 to 21 for the different experimental runs.
+Replace mc_exp with values ranging from 1 to 20 for the different experimental runs.
 
 Once the simulations are completed, you can compile and evaluate the results using the following script:
 
