@@ -1,0 +1,8 @@
+Metadata-Version: 2.1
+Name: squared-neural-families
+Version: 0.1
+Summary: Implementation of squared neural families
+Author: Russell Tsuchida
+Author-email: russell.tsuchida@data61.csiro.au
+License-File: LICENSE
+Requires-Dist: wheel

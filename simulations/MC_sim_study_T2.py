@@ -32,6 +32,8 @@ from hyper_optim import CV_optim, validation_set_selection
 
 from KDEs import Toroidal_KDE, kfold_BW_selector
 
+import snef_prod 
+
 import matplotlib.pyplot as plt 
 
 def mc_torus_sampler(Q, D, scramble=True):
@@ -358,4 +360,108 @@ for lambda_2 in  [5e-7, 5e-5, 5e-4, 5e-3, 5e-2, 5e-1, 5e-0]:
 
 with open(os.path.join(out_dir, "results_tpb_%s.pkl"%mc_exp), "wb") as pklfile:
 	pickle.dump(results_tpb, pklfile)
+
+
+##### pSNF Estimate #####
+def extrincis(theta):
+    x = torch.cos(theta)
+    y = torch.sin(theta)
+    coords = torch.stack([x, y], dim=-1)
+    return coords
+
+quad_tensor_euc = torch.cat((extrincis(quad_tensor[:,0]), 
+                                extrincis(quad_tensor[:,1])), dim=1)
+quad_tensor_euc = quad_tensor_euc.to(device)
+
+domain = "sphere"
+measure = "uniformsphere"
+activation = "exp" 
+encoding = "ident"
+
+alpha = 1.0
+hidden_width = 181
+output_width = 181
+marg_dim = 2
+
+snef_model = snef_prod.SquaredNNProd(D, domain, measure, activation, encoding, d=marg_dim, m=output_width, n=hidden_width)
+snef_model = snef_model.to(device)
+
+## optimization params 
+lr = 5e-5; num_epochs = 10000; 
+optim = torch.optim.Adam(snef_model.parameters(), lr=lr)
+
+## random split 
+train_prop = 0.9; batch_frac = 1
+n_train = int(train_prop * n)
+batch_size = n//batch_frac
+indices = torch.randperm(n) 
+
+points_tensor_euc = torch.cat((extrincis(points_tensor[:,0]), 
+                                extrincis(points_tensor[:,1])), dim=1)
+points_tensor_train = points_tensor_euc[indices[:n_train],:]
+points_tensor_test = points_tensor_euc[indices[n_train:],:]
+O_train = PointPattern(points_tensor_train)
+dataloader = DataLoader(O_train, shuffle=True, batch_size=batch_size, pin_memory=True, num_workers=0)
+
+TRACK_GT = False; num_iter_track = 100; outname="";
+
+if outname:
+    writer = SummaryWriter(outname)
+
+t1_psnf = time.time()
+
+with tqdm(total=len(dataloader)*num_epochs) as pbar:
+    for epoch in range(num_epochs+1):
+        for step_i, batch_data_i in enumerate(dataloader):
+            ## form PP likelihood
+            ## put on gpu 
+            batch_points = batch_data_i.to(device) 
+            batch_size = batch_points.shape[0]
+            ## form PP likelihood
+            data_term = torch.sum(snef_model(batch_points, log_scale=True).T) #n/batch_size 
+            ## exact integral 
+            norm_term = batch_size * snef_model.integrate(log_scale=False)
+            pp_likelihood = data_term - norm_term 
+            loss = - pp_likelihood
+            ## gradient step 
+            optim.zero_grad()
+            loss.backward()
+            optim.step()
+            pbar.update(1)
+        if TRACK_GT and (not epoch % num_iter_track) and outname:
+            log_fhat = snef_model(quad_tensor_euc, log_scale=True)
+            log_norm_integral = snef_model.integrate(log_scale=True)
+            density_hat_tensor = ((norm_pdf)**2) * torch.exp(log_fhat - log_norm_integral).cpu().detach()
+            l2_loss_norm = torch.mean((true_density_evals - density_hat_tensor)**2).item()/torch.mean((true_density_evals**2)).item()
+            hellinger_loss = torch.mean((torch.sqrt(true_density_evals) - torch.sqrt(density_hat_tensor))**2).item()
+            l2_correlation = pearsonr(true_density_evals.cpu().detach().numpy().flatten(), density_hat_tensor.numpy().flatten())[0]
+            angular_error = np.arccos(pearsonr(np.sqrt(true_density_evals.cpu().detach().numpy().flatten()), np.sqrt(density_hat_tensor.numpy().flatten()))[0])
+            print(epoch, "nISE", l2_loss_norm, "Angular Error", angular_error, "Integrand", density_hat_tensor.mean().item())
+            writer.add_scalar('Metrics/max_value', density_hat_tensor.max().item(), epoch)
+            writer.add_scalar('Loss/L2_loss', l2_loss_norm, epoch)
+            writer.add_scalar('Loss/Hellinger_Loss', hellinger_loss, epoch)
+            writer.add_scalar('Loss/L2_corr', l2_correlation, epoch)
+            writer.add_scalar('Loss/AE', angular_error, epoch)
+
+t2_psnf = time.time() - t1_psnf
+
+log_fhat = snef_model(quad_tensor_euc, log_scale=True)
+log_norm_integral = snef_model.integrate(log_scale=True)
+density_hat_tensor = ((norm_pdf)**2) * torch.exp(log_fhat - log_norm_integral).cpu().detach()
+
+density_matrix_hat = density_hat_tensor.reshape(Qgrid, Qgrid).cpu().detach().numpy()
+true_density_matrix = true_density_evals.reshape(Qgrid, Qgrid).cpu().detach().numpy()
+
+angular_error_snef = np.arccos(pearsonr(np.sqrt(true_density_matrix.flatten()), np.sqrt(density_matrix_hat.flatten()))[0])
+l2_loss_snef = (np.linalg.norm(true_density_matrix - density_matrix_hat, ord="fro")**2)*(1./(Qgrid**2))
+norm_l2_loss_snef = l2_loss_snef/((np.linalg.norm(true_density_matrix, ord="fro")**2)*(1./(Qgrid**2)))
+
+
+results_psnf["time"] = t2_psnf
+results_psnf["AE"] = angular_error_snef
+results_psnf["L2_error"] = l2_loss_snef
+results_psnf["Normalized_L2_error"] = norm_l2_loss_snef
+
+with open(os.path.join(out_dir, "results_snef_%s.pkl"%mc_exp), "wb") as pklfile:
+    pickle.dump(results_psnf, pklfile)
 
