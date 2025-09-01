@@ -3,7 +3,7 @@ import torch
 from torch import linalg as LA
 import sys 
 
-PATH2SNEF = "snefy-main"
+PATH2SNEF = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "snefy-main"))
 sys.path.append(PATH2SNEF)
 from squared_neural_families.nets import kernels
 
