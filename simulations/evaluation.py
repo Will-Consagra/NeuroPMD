@@ -71,3 +71,15 @@ if len(TPB):
 	print("SE", sem(TPB))
 
 
+pSNF = []
+for i in range(1,Nexp+1):
+	fname_i = os.path.join(data_dir, "results_snef_%s.pkl"%i)
+	if os.path.exists(fname_i):	
+		with open(fname_i, "rb") as pklfile:
+			data = pickle.load(pklfile)
+		pSNF.append(data[metric])
+
+if len(pSNF):
+	print("----pSNF Results----")
+	print("Mean", np.mean(pSNF))
+	print("SE", sem(pSNF))
