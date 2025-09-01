@@ -54,9 +54,11 @@ def UnifS2xS2(q):
 def S2_S2_proj_matrix(batch_points):
 	batch_points_sph = torch.cat((cart2sphere(batch_points[:,:3]), cart2sphere(batch_points[:,3:])), dim=1)
 	tb_11, tb_12 = S2_get_tangent_basis(batch_points_sph[:, 0:2]); tb_21, tb_22 = S2_get_tangent_basis(batch_points_sph[:, 2:]);
-	P_1 = tb_11.unsqueeze(2) * tb_12.unsqueeze(1); P_2 = tb_21.unsqueeze(2) * tb_22.unsqueeze(1);
-	P = torch.cat((torch.cat((P_1, torch.zeros(batch_points.shape[0], 3, 3, device=batch_points.device)), dim=2),
-				torch.cat((torch.zeros(batch_points.shape[0], 3, 3, device=batch_points.device), P_2), dim=2)), dim=1)
+	T_1 = torch.cat((tb_11.unsqueeze(2),tb_12.unsqueeze(2)),dim=2); T_2 = torch.cat((tb_21.unsqueeze(2),tb_22.unsqueeze(2)),dim=2);
+	P_1 = T_1 @ T_1.transpose(-1, -2); P_2 = T_2 @ T_2.transpose(-1, -2)
+	P = torch.zeros(batch_points_q2.shape[0], 6, 6, device=batch_points.device)
+	P[:, :3, :3] = P_1
+	P[:, 3:, 3:] = P_2
 	return P 
 
 def grad_euc(model, batch_points, eps):
