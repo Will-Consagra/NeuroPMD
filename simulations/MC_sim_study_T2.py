@@ -95,8 +95,8 @@ true_density_matrix = true_density_matrix_unnorm/gt_norm_term
 
 ## diff-geometry of Torus 
 D = 2
-#### INIF Estimate ####
 
+#### INIF Estimate ####
 ## network params 
 max_freq = 20 ## degree of harmonic encoding 
 rank = 128 
@@ -368,6 +368,8 @@ def extrincis(theta):
     y = torch.sin(theta)
     coords = torch.stack([x, y], dim=-1)
     return coords
+
+results_psnf = {}
 
 quad_tensor_euc = torch.cat((extrincis(quad_tensor[:,0]), 
                                 extrincis(quad_tensor[:,1])), dim=1)
