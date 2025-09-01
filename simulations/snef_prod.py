@@ -2,6 +2,7 @@ import numpy as np
 import torch
 from torch import linalg as LA
 import sys 
+import os 
 
 PATH2SNEF = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "snefy-main"))
 sys.path.append(PATH2SNEF)
