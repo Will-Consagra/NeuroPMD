@@ -1,5 +1,5 @@
 Code for deep neural network density estimation on product Riemannian manifold domains (NeuroPMD). 
-The project includes the network architecture, training routines, and scripts to reproduce key simulation results presented in the paper. 
+The project includes the network architecture, training routines, and scripts to reproduce key results presented in the paper. 
 The code is available on the project GitHub page: https://github.com/Will-Consagra/NeuroPMD.
 
 # Setting Up the Environment
