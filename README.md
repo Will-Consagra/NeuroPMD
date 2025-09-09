@@ -10,7 +10,7 @@ The conda environment (concon_ax) is defined in the environment.yml file. To cre
 
 `conda activate concon_ax`
 
-Alternatively, you can use a prebuilt Docker for this environment here `https://hub.docker.com/r/zhengwustat/concon_ax_env`. 
+Alternatively, you can use a prebuilt Docker image for this environment here `https://hub.docker.com/r/zhengwustat/concon_ax_env`. 
 
 See a setup example here: `https://guzhiling.github.io/not-so-prime/docs/Containers.html`.
 
