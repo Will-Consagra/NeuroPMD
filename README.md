@@ -27,7 +27,7 @@ If you wish to run the connectomics visualization script `vizSC.py`, you'll need
 
 # Running Simulations
 
-To run the simulation in Section 5.1 of the paper, using the `concon_ax` environment run:
+To run the simulations in Section 5.1 of the paper, using the `concon_ax` environment run:
 
 For T2
 
@@ -61,7 +61,7 @@ To visualize the VTK files of the marginal connectivities, from inside the `real
 
 `python vizSC.py --marg_surf_f endpoints/10/figures/fmodel_degree_10_width_256_depth_6_w0_10_lam_0.0001/f_evals_marg_mean10000.pkl \\
 				--SCFILE endpoints/10/figures/fmodel_degree_10_width_256_depth_6_w0_10_lam_0.0001/CC_lh_ico420000.npy \\
-				--OUTDIR endpoints/10/figures/fmodel_degree_10_width_256_depth_6_w0_10_lam_0.0001
+				--OUTDIR endpoints/10/figures/fmodel_degree_10_width_256_depth_6_w0_10_lam_0.0001 \\
 				--endpoint_file endpoints/10/LH__points_euc.pt
 `
 
