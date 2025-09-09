@@ -10,6 +10,12 @@ The conda environment (concon_ax) is defined in the environment.yml file. To cre
 
 `conda activate concon_ax`
 
+If you wish to run the connectomics visualization script `vizSC.py`, you'll need to also create the environment (viz_env)
+
+`conda env create -f viz_environment.yml` 
+
+`` 
+
 # Repository Structure
 
 - `neuroPMD/` contains pytorch code implementing our network architecture
@@ -20,7 +26,7 @@ The conda environment (concon_ax) is defined in the environment.yml file. To cre
 
 # Running Simulations
 
-To run the simulation in Section 5.1 of the paper, run:
+To run the simulation in Section 5.1 of the paper, using the `concon_ax` environment run:
 
 For T2
 
@@ -44,13 +50,13 @@ which prints the MC simulation results directly to the screen.
 
 # Running Connectomics Example 
 
-To fit a NeuroPMD to the structural connectivity example data from Section 5.2 of the paper, cd into the `realdata` directory and run: 
+To fit a NeuroPMD to the structural connectivity example data from Section 5.2 of the paper, cd into the `realdata` directory and using the `concon_ax` environment run:
 
 `python fitSC.py --device_num 0 --lambda_2 0.0001 --max_degree 10 --rank 256 --depth 6 --cyclic --viz --cp`
 
 **(WARNING: Run the above command on a GPU to avoid excessively long computing times)**
 
-To visualize the VTK files of the marginal connectivities, from inside the `realdata` directory run: 
+To visualize the VTK files of the marginal connectivities, from inside the `realdata` directory using the `viz_env` environment run:
 
 `python vizSC.py --marg_surf_f endpoints/10/figures/fmodel_degree_10_width_256_depth_6_w0_10_lam_0.0001/f_evals_marg_mean10000.pkl \\
 				--SCFILE endpoints/10/figures/fmodel_degree_10_width_256_depth_6_w0_10_lam_0.0001/CC_lh_ico420000.npy \\
