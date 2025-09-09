@@ -14,6 +14,9 @@ If you wish to run the connectomics visualization script `vizSC.py`, you'll need
 
 `conda env create -f viz_environment.yml` 
 
+Alternatively, you can use a prebuilt Docker for this environment here `https://hub.docker.com/r/zhengwustat/concon_ax_env`. 
+
+See a setup example here: `https://guzhiling.github.io/not-so-prime/docs/Containers.html`.
 
 # Repository Structure
 
