@@ -14,7 +14,6 @@ If you wish to run the connectomics visualization script `vizSC.py`, you'll need
 
 `conda env create -f viz_environment.yml` 
 
-`` 
 
 # Repository Structure
 
