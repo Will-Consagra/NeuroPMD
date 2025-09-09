@@ -42,5 +42,4 @@ and
 
 which prints the MC simulation results directly to the screen. 
 
-Warning, the T4 simulations take a significant amount of time. 
 
