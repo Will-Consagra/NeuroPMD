@@ -10,13 +10,13 @@ The conda environment (concon_ax) is defined in the environment.yml file. To cre
 
 `conda activate concon_ax`
 
-If you wish to run the connectomics visualization script `vizSC.py`, you'll need to also create the environment (viz_env)
-
-`conda env create -f viz_environment.yml` 
-
 Alternatively, you can use a prebuilt Docker for this environment here `https://hub.docker.com/r/zhengwustat/concon_ax_env`. 
 
 See a setup example here: `https://guzhiling.github.io/not-so-prime/docs/Containers.html`.
+
+If you wish to run the connectomics visualization script `vizSC.py`, you'll need to also create the environment (viz_env)
+
+`conda env create -f viz_environment.yml` 
 
 # Repository Structure
 
