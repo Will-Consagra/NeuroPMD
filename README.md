@@ -20,9 +20,15 @@ The conda environment (concon_ax) is defined in the environment.yml file. To cre
 
 # Running Simulations
 
-To run the simulation for the torus case in Section 5.1 of the paper, run
+To run the simulation in Section 5.1 of the paper, run:
+
+For T2
 
 `python simulations/MC_sim_study_T2.py mc_exp --data_dir simulations/T2_data --out_dir simulations/T2_data/T2_results`
+
+For T4 **(WARNING: Run on GPU cluster to avoid excessively long computing time)**
+
+`python simulations/MC_sim_study_T4.py mc_exp --data_dir simulations/T4_data --out_dir simulations/T4_data/T4_results`
 
 Replace mc_exp with values ranging from 1 to 21 for the different experimental runs.
 
@@ -30,5 +36,11 @@ Once the simulations are completed, you can compile and evaluate the results usi
 
 `python evaluation.py  --data_dir simulations/T2_data/T2_results --Nexp 20 --metric AE (or Normalized_L2_error)`
 
-This script prints the MC simulation results for the T^2 case directly to the screen. 
+and 
+
+`python evaluation.py  --data_dir simulations/T4_data/T4_results --Nexp 20 --metric AE (or Normalized_L2_error)`
+
+which prints the MC simulation results directly to the screen. 
+
+Warning, the T4 simulations take a significant amount of time. 
 
