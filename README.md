@@ -42,4 +42,21 @@ and
 
 which prints the MC simulation results directly to the screen. 
 
+# Running Connectomics Example 
+
+To fit a NeuroPMD to the structural connectivity example data from Section 5.2 of the paper, cd into the `realdata` directory and run: 
+
+`python fitSC.py --device_num 0 --lambda_2 0.0001 --max_degree 10 --rank 256 --depth 6 --cyclic --viz --cp`
+
+**(WARNING: Run the above command on a GPU to avoid excessively long computing times)**
+
+To visualize the VTK files of the marginal connectivities, from inside the `realdata` directory run: 
+
+`python vizSC.py --marg_surf_f endpoints/10/figures/fmodel_degree_10_width_256_depth_6_w0_10_lam_0.0001/f_evals_marg_mean10000.pkl \\
+				--SCFILE endpoints/10/figures/fmodel_degree_10_width_256_depth_6_w0_10_lam_0.0001/CC_lh_ico420000.npy \\
+				--OUTDIR endpoints/10/figures/fmodel_degree_10_width_256_depth_6_w0_10_lam_0.0001
+				--endpoint_file endpoints/10/LH__points_euc.pt
+`
+
+The .vtk files showing the marginal connectivity from several ROI's will be written to the sub folder `endpoints/10/figures/fmodel_degree_10_width_256_depth_6_w0_10_lam_0.0001`.
 
