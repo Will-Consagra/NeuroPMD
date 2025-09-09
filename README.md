@@ -21,7 +21,9 @@ If you wish to run the connectomics visualization script `vizSC.py`, you'll need
 
 - `optimization/` contains code for training the network 
 
-- `simulations/` contains code for reproducing some simulation results from the paper 
+- `simulations/` contains code for reproducing simulation results from the paper 
+
+- `realdata/` contains code for reproducing real data results from the paper 
 
 # Running Simulations
 
