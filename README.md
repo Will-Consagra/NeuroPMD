@@ -56,13 +56,13 @@ which prints the MC simulation results directly to the screen.
 
 To fit a NeuroPMD to the structural connectivity example data from Section 5.2 of the paper, from the head directory and using the `concon_ax` environment run:
 
-`python fitSC.py --device_num 0 --lambda_2 0.0001 --max_degree 10 --rank 256 --depth 6 --cyclic --viz --cp --data_dir realdata/endpoints/10`
+`python realdata/fitSC.py --device_num 0 --lambda_2 0.0001 --max_degree 10 --rank 256 --depth 6 --cyclic --viz --cp --data_dir realdata/endpoints/10`
 
 **(WARNING: Run the above command on a GPU to avoid excessively long computing times)**
 
 To visualize the VTK files of the marginal connectivities, from the head directory and using the `viz_env` environment run:
 
-`python vizSC.py --marg_surf_f realdata/endpoints/10/figures/fmodel_degree_10_width_256_depth_6_w0_10_lam_0.0001/f_evals_marg_mean10000.pkl \\
+`python realdata/vizSC.py --marg_surf_f realdata/endpoints/10/figures/fmodel_degree_10_width_256_depth_6_w0_10_lam_0.0001/f_evals_marg_mean10000.pkl \\
 				--SCFILE realdata/endpoints/10/figures/fmodel_degree_10_width_256_depth_6_w0_10_lam_0.0001/CC_lh_ico420000.npy \\
 				--OUTDIR realdata/endpoints/10/figures/fmodel_degree_10_width_256_depth_6_w0_10_lam_0.0001 \\
 				--endpoint_file realdata/endpoints/10/LH__points_euc.pt
